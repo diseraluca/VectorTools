@@ -2,6 +2,7 @@
 #include "VectorLocatorDrawOverride.h"
 #include "VectorOperations.h"
 #include "VectorScalarOperations.h"
+#include "VectorToolCommand.h"
 
 #include <maya/MFnPlugin.h>
 #include <maya/MDrawRegistry.h>
@@ -23,6 +24,12 @@ MStatus initializePlugin(MObject obj) {
 	status = MHWRender::MDrawRegistry::registerDrawOverrideCreator(VectorLocator::drawDbClassification, VectorLocator::drawRegistrantId, VectorLocatorDrawOverride::Creator);
 	CHECK_MSTATUS_AND_RETURN_IT(status);
 
+	status = plugin.registerContextCommand("VectorToolContext", VectorToolCommand::creator);
+	CHECK_MSTATUS_AND_RETURN_IT(status);
+
+	status = plugin.registerUI("VectorToolCreateUI", "VectorToolDeleteUI");
+	CHECK_MSTATUS_AND_RETURN_IT(status);
+
 	return MStatus::kSuccess;
 }
 
@@ -36,6 +43,14 @@ MStatus uninitializePlugin(MObject obj) {
 	status = plugin.deregisterNode(VectorLocator::id);
 	CHECK_MSTATUS_AND_RETURN_IT(status);
 
+	status = plugin.deregisterNode(VectorOperations::id);
+	CHECK_MSTATUS_AND_RETURN_IT(status);
+
+	status = plugin.deregisterNode(VectorScalarOperations::id);
+	CHECK_MSTATUS_AND_RETURN_IT(status);
+
+	status = plugin.deregisterContextCommand("VectorToolContext");
+	CHECK_MSTATUS_AND_RETURN_IT(status);
 
 	return MStatus::kSuccess;
 }

@@ -5,12 +5,21 @@
 #include <maya/MDagPath.h>
 #include <maya/MTransformationMatrix.h>
 #include <maya/MDagModifier.h>
+#include <maya/MMatrix.h>
 
-const MString START_HELP_STRING{ "VectorTool: Click to pick the origin point for the vector" };
-const MString END_HELP_STRING{ "VectorTool: Click to pick the end point for the vector" };
+const MString TITLE_STRING{ "Vector Tool" };
+const MString START_HELP_STRING{ "Click to pick the origin point for the vector" };
+const MString END_HELP_STRING{ "Click to pick the end point for the vector" };
+
+void * VectorTool::creator()
+{
+	return new VectorTool;
+}
 
 void VectorTool::toolOnSetup(MEvent & event)
 {
+	setTitleString(TITLE_STRING);
+
 	isSelectingEndPoint = false;
 	setHelpString(START_HELP_STRING);
 }
@@ -86,5 +95,5 @@ MStatus VectorTool::doPress(MEvent & event)
 		}
 	}
 
-	return MStatus();
+	return MStatus::kSuccess;
 }

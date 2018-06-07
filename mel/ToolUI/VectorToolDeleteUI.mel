@@ -1,0 +1,18 @@
+global proc VectorToolDeleteUI()
+{
+	setToolTo selectSuperContext;
+
+	if (`optionVar -exists VectorToolButtonName`)
+	{
+		string $VectorToolButtonName = `optionVar -q VectorToolButtonName`;
+		deleteUI $VectorToolButtonName;
+		optionVar -rm VectorToolButtonName;
+	}
+
+	if (`optionVar -exists VectorToolContextName`)
+	{
+		string $VectorToolContextName = `optionVar -q VectorToolContextName`;
+		deleteUI -tc $VectorToolContextName;
+		optionVar -rm VectorToolContextName;
+	}
+}

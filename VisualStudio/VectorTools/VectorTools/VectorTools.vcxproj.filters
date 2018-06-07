@@ -33,6 +33,9 @@
     <ClInclude Include="VectorScalarOperations.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="VectorToolCommand.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pluginMain.cpp">
@@ -51,6 +54,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="VectorScalarOperations.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="VectorToolCommand.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

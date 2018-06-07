@@ -156,6 +156,7 @@
     <ClInclude Include="VectorOperations.h" />
     <ClInclude Include="VectorScalarOperations.h" />
     <ClInclude Include="VectorTool.h" />
+    <ClInclude Include="VectorToolCommand.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pluginMain.cpp" />
@@ -164,6 +165,7 @@
     <ClCompile Include="VectorOperations.cpp" />
     <ClCompile Include="VectorScalarOperations.cpp" />
     <ClCompile Include="VectorTool.cpp" />
+    <ClCompile Include="VectorToolCommand.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

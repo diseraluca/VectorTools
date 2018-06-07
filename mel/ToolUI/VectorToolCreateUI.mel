@@ -1,0 +1,16 @@
+global proc VectorToolCreateUI()
+{
+	if (`optionVar -exists VectorToolContextName`) {
+		return;
+	}
+
+	string $VectorToolContextName = `eval "VectorToolContext"`;
+	
+	string $VectorToolButtonName = `toolButton
+					-doubleClickCommand "toolPropertyWindow"
+					-cl toolCluster
+					-p Custom
+					-t $VectorToolContextName`;
+
+	optionVar -sv VectorToolContextName $VectorToolContextName -sv VectorToolButtonName $VectorToolButtonName;
+}
