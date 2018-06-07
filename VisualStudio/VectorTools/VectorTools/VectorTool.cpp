@@ -4,6 +4,7 @@
 #include <maya/MFnDagNode.h>
 #include <maya/MDagPath.h>
 #include <maya/MTransformationMatrix.h>
+#include <maya/MDagModifier.h>
 
 const MString START_HELP_STRING{ "VectorTool: Click to pick the origin point for the vector" };
 const MString END_HELP_STRING{ "VectorTool: Click to pick the end point for the vector" };
@@ -36,30 +37,52 @@ MStatus VectorTool::doPress(MEvent & event)
 			setHelpString(END_HELP_STRING);
 		}
 		else {
+			endPoint = worldPosition;
+
 			//Create the locators and set them to the correct world space coordinates
-			MFnDagNode baseLocatorFn{};
-			baseLocatorFn.create("locator");
+			MDagModifier dagModifier{};
+			MFnDagNode dagFn{};
+			MTransformationMatrix locatorMatrix{};
 
-			MTransformationMatrix baseLocatorMatrix{ baseLocatorFn.transformationMatrix() };
-			baseLocatorMatrix.setTranslation(MVector(basePoint), MSpace::kWorld);
+			//Create the locators and position them at the correct position
+			MObject baseLocatorTransform{ dagModifier.createNode("locator") };
+			dagFn.setObject(baseLocatorTransform);
+			locatorMatrix = dagFn.transformationMatrix();
+			locatorMatrix.setTranslation(MVector(basePoint), MSpace::kWorld);
 
-			MFnDagNode endLocatorFn{};
-			endLocatorFn.create("locator");
+			// Retrieves the locator shape worl position attribute that will later be connected
+			MObject baseLocatorShape{ dagFn.child(0) };
+			dagFn.setObject(baseLocatorShape);
+			MPlug baseLocatorShapeWorldPositionPlug{ dagFn.findPlug("worldPosition") };
 
-			MTransformationMatrix endLocatorMatrix{ endLocatorFn.transformationMatrix() };
-			endLocatorMatrix.setTranslation(MVector(basePoint), MSpace::kWorld);
+			MObject endLocatorTransform{ dagModifier.createNode("locator") };
+			dagFn.setObject(baseLocatorTransform);
+			locatorMatrix = dagFn.transformationMatrix();
+			locatorMatrix.setTranslation(MVector(endPoint), MSpace::kWorld);
 
-			//Create the vectorLocator and connects the locators to its input
-			MFnDagNode vectorNodeFn{};
-			vectorNodeFn.create("VectorLocator");
+			MObject endLocatorShape{ dagFn.child(0) };
+			dagFn.setObject(endLocatorShape);
+			MPlug endLocatorWorldPositionPlug{ dagFn.findPlug("worldPosition") };
 
-			//Gets a plug to the needed attributes
-			MObject vectorNode{ vectorNodeFn.dagPath().node() };
-			MPlug vectorLocatorBasePointAttribute{ vectorNode, VectorLocator::basePoint  };
-			MPlug vectorLocatorEndPointAttribute{ vectorNode, VectorLocator::endPoint };
+			//Create the vectorLocator and prepare the plug to be connected
+			MObject vectorLocatorTransform{ dagModifier.createNode(VectorLocator::id) };
+			
+			dagFn.setObject(vectorLocatorTransform);
+			MObject vectorLocatorShape{ dagFn.child(0) };
+			dagFn.setObject(vectorLocatorShape);
 
-			MObject baseLocatorNode{ baseLocatorFn.dagPath().node() };
+			MPlug vectorLocatorBasePointPlug{ dagFn.findPlug("basePoint") };
+			MPlug vectorLocatorEndPointPlug{ dagFn.findPlug("endPoint") };
 
+			//Connects the locator world position to the input attribute of the vector locator
+			dagModifier.connect(baseLocatorShapeWorldPositionPlug, vectorLocatorBasePointPlug);
+			dagModifier.connect(endLocatorWorldPositionPlug, vectorLocatorEndPointPlug);
+
+			dagModifier.doIt();
+
+			//Sets the flag back to the basePoint selection and sets the help string back to the base point one
+			isSelectingEndPoint = false;
+			setHelpString(START_HELP_STRING);
 		}
 	}
 
