@@ -6,6 +6,8 @@
 #include <maya/MTransformationMatrix.h>
 #include <maya/MDagModifier.h>
 #include <maya/MMatrix.h>
+#include <maya/MGlobal.h>
+#include <maya/MFnTransform.h>
 
 const MString TITLE_STRING{ "Vector Tool" };
 const MString START_HELP_STRING{ "Click to pick the origin point for the vector" };
@@ -26,6 +28,8 @@ void VectorTool::toolOnSetup(MEvent & event)
 
 MStatus VectorTool::doPress(MEvent & event)
 {
+	MStatus status{};
+
 	if (event.mouseButton() == MEvent::kLeftMouse) {
 		M3dView currentView = M3dView::active3dView();
 
@@ -48,48 +52,52 @@ MStatus VectorTool::doPress(MEvent & event)
 		else {
 			endPoint = worldPosition;
 
-			//Create the locators and set them to the correct world space coordinates
-			MDagModifier dagModifier{};
 			MFnDagNode dagFn{};
-			MTransformationMatrix locatorMatrix{};
+			MFnTransform transformFn{};
 
-			//Create the locators and position them at the correct position
-			MObject baseLocatorTransform{ dagModifier.createNode("locator") };
-			dagFn.setObject(baseLocatorTransform);
-			locatorMatrix = dagFn.transformationMatrix();
-			locatorMatrix.setTranslation(MVector(basePoint), MSpace::kWorld);
+			MObject baseLocatorTransform{ dagFn.create("locator") };
 
-			// Retrieves the locator shape worl position attribute that will later be connected
-			MObject baseLocatorShape{ dagFn.child(0) };
+			MDagPath baseLocatorDagPath{};
+			dagFn.getPath(baseLocatorDagPath);
+			transformFn.setObject(baseLocatorDagPath);
+			transformFn.setTranslation(basePoint, MSpace::kWorld);
+
+			baseLocatorDagPath.extendToShape();
+			MObject baseLocatorShape{ baseLocatorDagPath.node() };
 			dagFn.setObject(baseLocatorShape);
-			MPlug baseLocatorShapeWorldPositionPlug{ dagFn.findPlug("worldPosition") };
+			MPlug baseLocatorWorldPositionPlug{ dagFn.findPlug("worldPosition") };
+			baseLocatorWorldPositionPlug = baseLocatorWorldPositionPlug.elementByLogicalIndex(0);
 
-			MObject endLocatorTransform{ dagModifier.createNode("locator") };
-			dagFn.setObject(baseLocatorTransform);
-			locatorMatrix = dagFn.transformationMatrix();
-			locatorMatrix.setTranslation(MVector(endPoint), MSpace::kWorld);
+			MObject endLocatorTransform{ dagFn.create("locator") };
 
-			MObject endLocatorShape{ dagFn.child(0) };
+			MDagPath endLocatorDagPath{};
+			dagFn.getPath(endLocatorDagPath);
+			transformFn.setObject(baseLocatorDagPath);
+			transformFn.setTranslation(endPoint, MSpace::kWorld);
+
+			endLocatorDagPath.extendToShape();
+			MObject endLocatorShape{ endLocatorDagPath.node() };
 			dagFn.setObject(endLocatorShape);
 			MPlug endLocatorWorldPositionPlug{ dagFn.findPlug("worldPosition") };
+			endLocatorWorldPositionPlug = endLocatorWorldPositionPlug.elementByLogicalIndex(0);
 
-			//Create the vectorLocator and prepare the plug to be connected
-			MObject vectorLocatorTransform{ dagModifier.createNode(VectorLocator::id) };
-			
-			dagFn.setObject(vectorLocatorTransform);
-			MObject vectorLocatorShape{ dagFn.child(0) };
+			MObject vectorLocatorTransform{ dagFn.create("VectorLocator") };
+
+			MDagPath vectorLocatorDagPath{};
+			dagFn.getPath(vectorLocatorDagPath);
+			vectorLocatorDagPath.extendToShape();
+
+			MObject vectorLocatorShape{ vectorLocatorDagPath.node() };
 			dagFn.setObject(vectorLocatorShape);
-
 			MPlug vectorLocatorBasePointPlug{ dagFn.findPlug("basePoint") };
 			MPlug vectorLocatorEndPointPlug{ dagFn.findPlug("endPoint") };
 
-			//Connects the locator world position to the input attribute of the vector locator
-			dagModifier.connect(baseLocatorShapeWorldPositionPlug, vectorLocatorBasePointPlug);
+			MDagModifier dagModifier{};
+			dagModifier.connect(baseLocatorWorldPositionPlug, vectorLocatorBasePointPlug);
 			dagModifier.connect(endLocatorWorldPositionPlug, vectorLocatorEndPointPlug);
-
 			dagModifier.doIt();
 
-			//Sets the flag back to the basePoint selection and sets the help string back to the base point one
+    		//Sets the flag back to the basePoint selection and sets the help string back to the base point one
 			isSelectingEndPoint = false;
 			setHelpString(START_HELP_STRING);
 		}
