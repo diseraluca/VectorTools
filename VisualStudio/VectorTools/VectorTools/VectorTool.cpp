@@ -26,7 +26,8 @@ void VectorTool::toolOnSetup(MEvent & event)
 	setHelpString(START_HELP_STRING);
 }
 
-MStatus VectorTool::doPress(MEvent & event)
+MStatus VectorTool::doPress(MEvent & event, MHWRender::MUIDrawManager& drawManager,
+	const MHWRender::MFrameContext& context)
 {
 	MStatus status{};
 

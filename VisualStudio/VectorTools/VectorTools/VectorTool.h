@@ -8,7 +8,8 @@ class VectorTool : public MPxContext {
 public:
 	static void* creator();
 	virtual void toolOnSetup(MEvent& event) override;
-	virtual MStatus doPress(MEvent& event) override;
+	virtual MStatus doPress(MEvent& event, MHWRender::MUIDrawManager& drawManager,
+		const MHWRender::MFrameContext& context) override;
 
 private:
 	MPoint basePoint;
