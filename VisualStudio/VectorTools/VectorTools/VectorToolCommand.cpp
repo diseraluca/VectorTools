@@ -3,7 +3,7 @@
 
 MPxContext * VectorToolCommand::makeObj()
 {
-	return new VectorTool;
+	return new VectorTool();
 }
 
 void * VectorToolCommand::creator()

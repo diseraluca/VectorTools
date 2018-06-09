@@ -8,6 +8,7 @@
 #include <maya/MMatrix.h>
 #include <maya/MGlobal.h>
 #include <maya/MFnTransform.h>
+#include <maya/MFnCamera.h>
 
 const MString TITLE_STRING{ "Vector Tool" };
 const MString START_HELP_STRING{ "Click to pick the origin point for the vector" };
@@ -15,7 +16,7 @@ const MString END_HELP_STRING{ "Click to pick the end point for the vector" };
 
 void * VectorTool::creator()
 {
-	return new VectorTool;
+	return new VectorTool();
 }
 
 void VectorTool::toolOnSetup(MEvent & event)
@@ -44,14 +45,23 @@ MStatus VectorTool::doPress(MEvent & event, MHWRender::MUIDrawManager& drawManag
 		MVector worldDirection{};
 		currentView.viewToWorld(portPositionX, portPositionY, worldPosition, worldDirection);
 
+		MDagPath cameraPath{};
+		currentView.getCamera(cameraPath);
+		MFnCamera cameraFn{ cameraPath };
+		MVector cameraDirection{ cameraFn.viewDirection(MSpace::kWorld) };
+
+		double dl{ worldDirection * cameraDirection };
+		double d{ (MPoint(0, 0, 0) - worldPosition) * cameraDirection / dl };
+		MPoint point{ worldPosition + d * worldDirection };
+
 		if (!isSelectingEndPoint) {
-			basePoint = worldPosition;
+			basePoint = point;
 
 			isSelectingEndPoint = true;
 			setHelpString(END_HELP_STRING);
 		}
 		else {
-			endPoint = worldPosition;
+			endPoint = point;
 
 			MFnDagNode dagFn{};
 			MFnTransform transformFn{};

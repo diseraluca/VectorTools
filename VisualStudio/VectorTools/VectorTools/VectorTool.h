@@ -6,6 +6,8 @@
 
 class VectorTool : public MPxContext {
 public:
+	VectorTool() :basePoint{}, endPoint{} {}
+
 	static void* creator();
 	virtual void toolOnSetup(MEvent& event) override;
 	virtual MStatus doPress(MEvent& event, MHWRender::MUIDrawManager& drawManager,
