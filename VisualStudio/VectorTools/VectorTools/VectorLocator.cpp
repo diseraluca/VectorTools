@@ -49,6 +49,7 @@ MStatus VectorLocator::initialize()
 	nAttr.setWritable(true);
 	nAttr.setKeyable(true);
 	nAttr.setStorable(true);
+	nAttr.setUsedAsColor(true);
 
 	status = addAttribute(color);
 	CHECK_MSTATUS_AND_RETURN_IT(status);
