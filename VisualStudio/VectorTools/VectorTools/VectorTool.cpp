@@ -19,7 +19,7 @@ const MString END_HELP_STRING{ "Click to pick the end point for the vector" };
 
 void * VectorTool::creator()
 {
-	return new VectorTool();
+	return new VectorTool;
 }
 
 void VectorTool::toolOnSetup(MEvent & event)
@@ -39,15 +39,6 @@ MStatus VectorTool::doPress(MEvent & event, MHWRender::MUIDrawManager& drawManag
 		getCursorWorldPosition(event, worldPosition, worldDirection);
 
 		MVector cameraDirection{ getActiveCameraDirection(MSpace::kWorld) };
-
-		double dl{ worldDirection * cameraDirection };
-		double d{ (MPoint(0, 0, 0) - worldPosition) * cameraDirection / dl };
-		MPoint point{ worldPosition + d * worldDirection };
-
-		MDagPath cameraPath{};
-		currentView.getCamera(cameraPath);
-		MFnCamera cameraFn{ cameraPath };
-		MVector cameraDirection{ cameraFn.viewDirection(MSpace::kWorld) };
 
 		double dl{ worldDirection * cameraDirection };
 		double d{ (MPoint(0, 0, 0) - worldPosition) * cameraDirection / dl };
@@ -92,7 +83,7 @@ MStatus VectorTool::doPress(MEvent & event, MHWRender::MUIDrawManager& drawManag
 			M3dView activeView{ M3dView::active3dView() };
 			activeView.refresh();
 
-    		//Sets the flag back to the basePoint selection and sets the help string back to the base point one
+			//Sets the flag back to the basePoint selection and sets the help string back to the base point one
 			isSelectingEndPoint = false;
 			setHelpString(START_HELP_STRING);
 		}
@@ -141,7 +132,7 @@ MObject & VectorTool::shapeFromTransform(MObject & transform)
 	MDagPath transformDagPath{};
 	MFnDagNode dagFn{ transform };
 	dagFn.getPath(transformDagPath);
-	
+
 	transformDagPath.extendToShape();
 	MObject shape{ transformDagPath.node() };
 	return shape;
@@ -149,7 +140,7 @@ MObject & VectorTool::shapeFromTransform(MObject & transform)
 
 MPlug  VectorTool::plugFromMObject(MObject & node, MString attributeName)
 {
-	MFnDagNode dagFn{node};
+	MFnDagNode dagFn{ node };
 	MPlug resultPlug{ dagFn.findPlug(attributeName) };
 
 	return resultPlug;
