@@ -1,8 +1,12 @@
+// Copyright 2018 Luca Di Sera
+// This code is licensed under the MIT License ( see LICENSE.txt for details )
+
 #pragma once
 
 #include <maya/MPxContext.h>
 #include <maya/MPoint.h>
 #include <maya/M3dView.h>
+#include <maya/MPlug.h>
 
 class VectorTool : public MPxContext {
 public:
@@ -10,6 +14,13 @@ public:
 	virtual void toolOnSetup(MEvent& event) override;
 	virtual MStatus doPress(MEvent& event, MHWRender::MUIDrawManager& drawManager,
 		const MHWRender::MFrameContext& context) override;
+
+private:
+	MStatus getCursorWorldPosition(MEvent& event, MPoint& worldPt, MVector& worldVector);
+	MVector getActiveCameraDirection(const MSpace::Space&);
+	MStatus setTranslationsFromMObject(MObject& transform, MPoint& position,const MSpace::Space& space = MSpace::kWorld );
+	MObject& shapeFromTransform(MObject& transform);
+	MPlug plugFromMObject(MObject& node, MString attributeName);
 
 private:
 	MPoint basePoint;
