@@ -1,3 +1,6 @@
+// Copyright 2018 Luca Di Sera
+// This code is licensed under the MIT License ( see LICENSE.txt for details )
+
 #include "VectorTool.h"
 #include "VectorLocator.h"
 
@@ -30,20 +33,16 @@ void VectorTool::toolOnSetup(MEvent & event)
 MStatus VectorTool::doPress(MEvent & event, MHWRender::MUIDrawManager& drawManager,
 	const MHWRender::MFrameContext& context)
 {
-	MStatus status{};
-
 	if (event.mouseButton() == MEvent::kLeftMouse) {
-		M3dView currentView = M3dView::active3dView();
-
-		//Gets the position in port space where the left mouse button was pressed
-		short portPositionX{};
-		short portPositionY{};
-		event.getPosition(portPositionX, portPositionY);
-
-		//Convert the port space coordinates to worldSpace
 		MPoint worldPosition{};
 		MVector worldDirection{};
-		currentView.viewToWorld(portPositionX, portPositionY, worldPosition, worldDirection);
+		getCursorWorldPosition(event, worldPosition, worldDirection);
+
+		MVector cameraDirection{ getActiveCameraDirection(MSpace::kWorld) };
+
+		double dl{ worldDirection * cameraDirection };
+		double d{ (MPoint(0, 0, 0) - worldPosition) * cameraDirection / dl };
+		MPoint point{ worldPosition + d * worldDirection };
 
 		MDagPath cameraPath{};
 		currentView.getCamera(cameraPath);
@@ -64,49 +63,34 @@ MStatus VectorTool::doPress(MEvent & event, MHWRender::MUIDrawManager& drawManag
 			endPoint = point;
 
 			MFnDagNode dagFn{};
-			MFnTransform transformFn{};
 
 			MObject baseLocatorTransform{ dagFn.create("locator") };
+			setTranslationsFromMObject(baseLocatorTransform, basePoint);
 
-			MDagPath baseLocatorDagPath{};
-			dagFn.getPath(baseLocatorDagPath);
-			transformFn.setObject(baseLocatorDagPath);
-			transformFn.setTranslation(basePoint, MSpace::kWorld);
-
-			baseLocatorDagPath.extendToShape();
-			MObject baseLocatorShape{ baseLocatorDagPath.node() };
-			dagFn.setObject(baseLocatorShape);
-			MPlug baseLocatorWorldPositionPlug{ dagFn.findPlug("worldPosition") };
+			MObject baseLocatorShape{ shapeFromTransform(baseLocatorTransform) };
+			MPlug baseLocatorWorldPositionPlug{ plugFromMObject(baseLocatorShape, "worldPosition") };
 			baseLocatorWorldPositionPlug = baseLocatorWorldPositionPlug.elementByLogicalIndex(0);
 
 			MObject endLocatorTransform{ dagFn.create("locator") };
+			setTranslationsFromMObject(endLocatorTransform, endPoint);
 
-			MDagPath endLocatorDagPath{};
-			dagFn.getPath(endLocatorDagPath);
-			transformFn.setObject(baseLocatorDagPath);
-			transformFn.setTranslation(endPoint, MSpace::kWorld);
-
-			endLocatorDagPath.extendToShape();
-			MObject endLocatorShape{ endLocatorDagPath.node() };
-			dagFn.setObject(endLocatorShape);
-			MPlug endLocatorWorldPositionPlug{ dagFn.findPlug("worldPosition") };
+			MObject endLocatorShape{ shapeFromTransform(endLocatorTransform) };
+			MPlug endLocatorWorldPositionPlug{ plugFromMObject(endLocatorShape, "worldPosition") };
 			endLocatorWorldPositionPlug = endLocatorWorldPositionPlug.elementByLogicalIndex(0);
 
 			MObject vectorLocatorTransform{ dagFn.create("VectorLocator") };
 
-			MDagPath vectorLocatorDagPath{};
-			dagFn.getPath(vectorLocatorDagPath);
-			vectorLocatorDagPath.extendToShape();
-
-			MObject vectorLocatorShape{ vectorLocatorDagPath.node() };
-			dagFn.setObject(vectorLocatorShape);
-			MPlug vectorLocatorBasePointPlug{ dagFn.findPlug("basePoint") };
-			MPlug vectorLocatorEndPointPlug{ dagFn.findPlug("endPoint") };
+			MObject vectorLocatorShape{ shapeFromTransform(vectorLocatorTransform) };
+			MPlug vectorLocatorBasePointPlug{ plugFromMObject(vectorLocatorShape, "basePoint") };
+			MPlug vectorLocatorEndPointPlug{ plugFromMObject(vectorLocatorShape, "endPoint") };
 
 			MDagModifier dagModifier{};
 			dagModifier.connect(baseLocatorWorldPositionPlug, vectorLocatorBasePointPlug);
 			dagModifier.connect(endLocatorWorldPositionPlug, vectorLocatorEndPointPlug);
 			dagModifier.doIt();
+
+			M3dView activeView{ M3dView::active3dView() };
+			activeView.refresh();
 
     		//Sets the flag back to the basePoint selection and sets the help string back to the base point one
 			isSelectingEndPoint = false;
@@ -115,4 +99,58 @@ MStatus VectorTool::doPress(MEvent & event, MHWRender::MUIDrawManager& drawManag
 	}
 
 	return MStatus::kSuccess;
+}
+
+MStatus VectorTool::getCursorWorldPosition(MEvent & event, MPoint & worldPt, MVector & worldVector)
+{
+	short portPositionX{ 0 }, portPositionY{ 0 };
+	event.getPosition(portPositionX, portPositionY);
+
+	M3dView activeView{ M3dView::active3dView() };
+	activeView.viewToWorld(portPositionX, portPositionY, worldPt, worldVector);
+
+	return MS::kSuccess;
+}
+
+MVector VectorTool::getActiveCameraDirection(const MSpace::Space &space)
+{
+	M3dView activeView{ M3dView::active3dView() };
+	MDagPath cameraPath{};
+	activeView.getCamera(cameraPath);
+
+	MFnCamera cameraFn{ cameraPath };
+
+	return cameraFn.viewDirection(space);
+}
+
+MStatus VectorTool::setTranslationsFromMObject(MObject & transform, MPoint & position, const MSpace::Space & space)
+{
+	MFnDagNode dagFn{ transform };
+
+	MDagPath transformPath{};
+	dagFn.getPath(transformPath);
+
+	MFnTransform transformFn{ transformPath };
+	transformFn.setTranslation(MVector(position), space);
+
+	return MStatus::kSuccess;
+}
+
+MObject & VectorTool::shapeFromTransform(MObject & transform)
+{
+	MDagPath transformDagPath{};
+	MFnDagNode dagFn{ transform };
+	dagFn.getPath(transformDagPath);
+	
+	transformDagPath.extendToShape();
+	MObject shape{ transformDagPath.node() };
+	return shape;
+}
+
+MPlug  VectorTool::plugFromMObject(MObject & node, MString attributeName)
+{
+	MFnDagNode dagFn{node};
+	MPlug resultPlug{ dagFn.findPlug(attributeName) };
+
+	return resultPlug;
 }

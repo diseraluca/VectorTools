@@ -1,3 +1,6 @@
+// Copyright 2018 Luca Di Sera
+// This code is licensed under the MIT License ( see LICENSE.txt for details )
+
 #include "VectorOperations.h"
 
 #include <maya/MFnNumericAttribute.h>
